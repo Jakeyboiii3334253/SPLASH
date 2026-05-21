@@ -64,7 +64,7 @@ function applyHeadConfig(config) {
 
 applyHeadConfig(splashHeadConfig);
 
-const gamesCdnUrl = "https://cdn.jsdelivr.net/gh/rhenryw/SPLASHGames@main/games.json";
+const gamesCdnUrl = "https://cdn.jsdelivr.net/gh/rhenryw/SPLASHGames@d875f5835defc0bd2c27c6bf2de3a568169cf7c9/games.json";
 const gamesStorage = {
   recents: "splash:games:recents",
   favorites: "splash:games:favorites",
