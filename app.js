@@ -64,7 +64,9 @@ function applyHeadConfig(config) {
 
 applyHeadConfig(splashHeadConfig);
 
-const gamesCdnUrl = "https://cdn.jsdelivr.net/gh/rhenryw/SPLASHGames@d875f5835defc0bd2c27c6bf2de3a568169cf7c9/games.json";
+const gamesCdnUrls = [
+  "https://cdn.jsdelivr.net/gh/rhenryw/SPLASHGames@3670fd2276376bfadc6b8aed939855380f84649e/games.json",
+];
 const gamesStorage = {
   recents: "splash:games:recents",
   favorites: "splash:games:favorites",
@@ -1232,29 +1234,34 @@ function buildGamesIndex(list) {
 function loadGamesData() {
   if (gamesLoaded) return Promise.resolve(gamesData);
   if (gamesLoading) return gamesLoading;
-  gamesLoading = fetch(gamesCdnUrl)
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("Failed to load games");
+  gamesLoading = (async () => {
+    let lastError = null;
+
+    for (const url of gamesCdnUrls) {
+      try {
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`Failed to load games from ${url}`);
+        }
+
+        const raw = await response.json();
+        const normalized = normalizeGamesData(raw);
+        gamesData = normalized;
+        gamesLoaded = true;
+        buildGamesIndex(normalized);
+        return normalized;
+      } catch (error) {
+        lastError = error;
       }
-      return response.json();
-    })
-    .then((raw) => {
-      const normalized = normalizeGamesData(raw);
-      gamesData = normalized;
-      gamesLoaded = true;
-      buildGamesIndex(normalized);
-      return normalized;
-    })
-    .catch((error) => {
-      gamesData = [];
-      gamesLoaded = false;
-      buildGamesIndex([]);
-      throw error;
-    })
-    .finally(() => {
-      gamesLoading = null;
-    });
+    }
+
+    gamesData = [];
+    gamesLoaded = false;
+    buildGamesIndex([]);
+    throw lastError ?? new Error("Failed to load games");
+  })().finally(() => {
+    gamesLoading = null;
+  });
   return gamesLoading;
 }
 
@@ -1640,8 +1647,8 @@ function handleCommand(value) {
       .then(() => {
         renderGamesMenu();
       })
-      .catch(() => {
-        appendOutput("Failed to load games list", "#ff6b6b");
+      .catch((err) => {
+        appendOutput("Failed to load games list: " + err.message, "#ff6b6b");
         exitGamesUi();
       });
     return;
@@ -1652,8 +1659,8 @@ function handleCommand(value) {
       .then(() => {
         renderGamesListAll();
       })
-      .catch(() => {
-        appendOutput("Failed to load games list", "#ff6b6b");
+      .catch((err) => {
+        appendOutput("Failed to load games list: " + err.message, "#ff6b6b");
         exitGamesUi();
       });
     return;

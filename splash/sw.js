@@ -266,7 +266,7 @@ async function handleRequest(event) {
 self.addEventListener("fetch", (event) => {
   const url = event.request.url;
 
-  if (url.includes("supabase.co")) {
+  if (url.includes("supabase.co") || url.includes("cdn.jsdelivr.net/gh/rhenryw/SPLASHGames")) {
     return;
   }
 
